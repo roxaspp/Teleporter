@@ -1,4 +1,4 @@
---// Auto Accept Gifts with Webhook (unang gift agad, sunod every 2s + account age in years)
+--// Auto Accept Gifts with Webhook (unang gift agad, sunod every 2s)
 local acceptEvent = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("AcceptPetGift")
 local AcceptedGifts = {}
 local FirstGift = true
@@ -42,18 +42,16 @@ for _, remote in ipairs(ReplicatedStorage:GetDescendants()) do
                     -- Final Pet Format
                     local petFinal = petName .. petWeight .. petAge
 
-                    -- Sender Account Age
+                    -- Sender Age
                     local accountAge = "N/A"
-                    local accountYears = ""
                     if sender and sender.AccountAge then
                         accountAge = tostring(sender.AccountAge) .. " days"
-                        accountYears = string.format(" (~%.1f years)", sender.AccountAge / 365)
                     end
 
                     -- Webhook Message
                     local msg = string.format(
-                        "🎁 **Auto Accepted Gift!**\n👤 From: `%s`\n📅 Account Age: `%s%s`\n🆔 GiftID: `%s`\n🐾 Pet: %s\n📌 Receiver: `%s`",
-                        tostring(sender), accountAge, accountYears, tostring(giftId), petFinal, LocalPlayer.Name
+                        "🎁 **Auto Accepted Gift!**\n👤 From: `%s`\n📅 Age: `%s`\n🆔 GiftID: `%s`\n🐾 Pet: %s\n📌 Receiver: `%s`",
+                        tostring(sender), accountAge, tostring(giftId), petFinal, LocalPlayer.Name
                     )
                     sendWebhook(msg)
 
