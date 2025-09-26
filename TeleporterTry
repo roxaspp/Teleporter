@@ -1,0 +1,72 @@
+--// Auto Accept Gifts with Webhook (unang gift agad, sunod every 2s + account age in years)
+local acceptEvent = ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("AcceptPetGift")
+local AcceptedGifts = {}
+local FirstGift = true
+
+for _, remote in ipairs(ReplicatedStorage:GetDescendants()) do
+    if remote:IsA("RemoteEvent") and string.lower(remote.Name):find("gift") then
+        remote.OnClientEvent:Connect(function(giftId, petInfo, sender)
+            if getgenv().AutoAccept and not AcceptedGifts[giftId] then
+                AcceptedGifts[giftId] = true
+                local delayTime = FirstGift and 0 or 2
+                FirstGift = false
+
+                task.defer(function()
+                    task.wait(delayTime)
+                    acceptEvent:FireServer(true, giftId)
+
+                    -- Pet Name
+                    local petName = "Unknown"
+                    if typeof(petInfo) == "table" then
+                        petName = petInfo.name or petInfo.petName or "Unknown Pet"
+                    elseif typeof(petInfo) == "string" then
+                        petName = petInfo
+                    end
+
+                    -- Pet Weight
+                    local petWeight = ""
+                    if typeof(petInfo) == "table" and petInfo.weight then
+                        petWeight = string.format(" [%.2f KG]", tonumber(petInfo.weight) or 0)
+                    end
+
+                    -- Pet Age
+                    local petAge = ""
+                    if typeof(petInfo) == "table" then
+                        if petInfo.age then
+                            petAge = string.format(" [Age %s]", tostring(petInfo.age))
+                        elseif petInfo.petAge then
+                            petAge = string.format(" [Age %s]", tostring(petInfo.petAge))
+                        end
+                    end
+
+                    -- Final Pet Format
+                    local petFinal = petName .. petWeight .. petAge
+
+                    -- Sender Account Age
+                    local accountAge = "N/A"
+                    local accountYears = ""
+                    if sender and sender.AccountAge then
+                        accountAge = tostring(sender.AccountAge) .. " days"
+                        accountYears = string.format(" (~%.1f years)", sender.AccountAge / 365)
+                    end
+
+                    -- Webhook Message
+                    local msg = string.format(
+                        "🎁 **Auto Accepted Gift!**\n👤 From: `%s`\n📅 Account Age: `%s%s`\n🆔 GiftID: `%s`\n🐾 Pet: %s\n📌 Receiver: `%s`",
+                        tostring(sender), accountAge, accountYears, tostring(giftId), petFinal, LocalPlayer.Name
+                    )
+                    sendWebhook(msg)
+
+                    -- Debug Log (para makita lahat ng field ng petInfo)
+                    if typeof(petInfo) == "table" then
+                        print("---- Pet Info Dump ----")
+                        for k,v in pairs(petInfo) do
+                            print(k,v)
+                        end
+                        print("-----------------------")
+                    end
+                end)
+            end
+        end)
+    end
+end
